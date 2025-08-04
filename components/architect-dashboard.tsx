@@ -13,6 +13,7 @@ function AIAnalysisReviewDialog({
   aiResponse,
   formData,
   isProcessing,
+  processingProgress,
 }: {
   open: boolean;
   onConfirm: (editedAI?: any) => void;
@@ -26,6 +27,7 @@ function AIAnalysisReviewDialog({
     selectedFiles: FileList | null;
   };
   isProcessing: boolean;
+  processingProgress: number;
 }) {
   // Local state for editing AI response
   const [localAI, setLocalAI] = useState<any>(aiResponse);
@@ -63,17 +65,78 @@ function AIAnalysisReviewDialog({
           </DialogDescription>
         </DialogHeader>
         {isProcessing ? (
-          <div className="space-y-3 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Zap className="h-5 w-5 text-blue-600 animate-pulse" />
-              <span className="font-medium text-blue-900">
-                AI Processing in Progress
-              </span>
+          <div className="space-y-4 p-6 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg border border-blue-200">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <Zap className="h-6 w-6 text-blue-600 animate-pulse" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-ping"></div>
+              </div>
+              <div>
+                <span className="font-semibold text-blue-900 text-lg">
+                  🤖 AI Analysis in Progress
+                </span>
+                <p className="text-sm text-blue-700 mt-1">
+                  Advanced neural networks processing your architectural data...
+                </p>
+              </div>
             </div>
-            <Progress value={0} className="w-full" />
-            <p className="text-sm text-blue-700">
-              Analyzing your project files...
-            </p>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-blue-800">Overall Progress</span>
+                <span className="text-sm text-blue-600">{processingProgress}%</span>
+              </div>
+              <Progress value={processingProgress} className="w-full h-2" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${processingProgress >= 20 ? 'bg-green-500' : 'bg-gray-300'} ${processingProgress === 20 ? 'animate-pulse' : ''}`}></div>
+                  <span className="text-sm text-blue-800">📄 Document Analysis</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${processingProgress >= 40 ? 'bg-green-500' : 'bg-gray-300'} ${processingProgress === 40 ? 'animate-pulse' : ''}`}></div>
+                  <span className="text-sm text-blue-800">🏗️ Floor Plan Recognition</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${processingProgress >= 60 ? 'bg-green-500' : 'bg-gray-300'} ${processingProgress === 60 ? 'animate-pulse' : ''}`}></div>
+                  <span className="text-sm text-blue-800">🔍 Material Identification</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${processingProgress >= 80 ? 'bg-green-500' : 'bg-gray-300'} ${processingProgress === 80 ? 'animate-pulse' : ''}`}></div>
+                  <span className="text-sm text-blue-800">📊 Quantity Calculation</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${processingProgress >= 100 ? 'bg-green-500' : 'bg-gray-300'} ${processingProgress === 100 ? 'animate-pulse' : ''}`}></div>
+                  <span className="text-sm text-blue-800">✨ Final Optimization</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white/70 p-3 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <span className="text-sm font-medium text-blue-900">AI Status</span>
+              </div>
+              <p className="text-sm text-blue-700">
+                {processingProgress < 20 && "🔍 Scanning architectural drawings and specifications..."}
+                {processingProgress >= 20 && processingProgress < 40 && "📐 Analyzing floor plans and room layouts..."}
+                {processingProgress >= 40 && processingProgress < 60 && "🧱 Identifying materials and construction elements..."}
+                {processingProgress >= 60 && processingProgress < 80 && "📏 Calculating quantities and measurements..."}
+                {processingProgress >= 80 && processingProgress < 100 && "⚡ Optimizing material schedule and cross-referencing..."}
+                {processingProgress >= 100 && "✅ Analysis complete! Preparing results..."}
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-center space-x-2 text-xs text-blue-600">
+              <span>Powered by</span>
+              <span className="font-semibold bg-blue-200 px-2 py-1 rounded">ConstructionAI™</span>
+            </div>
           </div>
         ) : (
           <>
@@ -259,6 +322,8 @@ import {
   Zap,
   Edit2,
   Save,
+  Brain,
+  Cpu,
 } from "lucide-react";
 import {
   getProjects,
@@ -311,11 +376,21 @@ export function ArchitectDashboard() {
     setIsProcessing(true);
     setProcessingProgress(0);
 
-    const steps = [20, 40, 60, 80, 100];
-    for (const progress of steps) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setProcessingProgress(progress);
+    const steps = [
+      { progress: 20, delay: 800 },
+      { progress: 40, delay: 1200 },
+      { progress: 60, delay: 1000 },
+      { progress: 80, delay: 900 },
+      { progress: 100, delay: 700 }
+    ];
+    
+    for (const step of steps) {
+      await new Promise((resolve) => setTimeout(resolve, step.delay));
+      setProcessingProgress(step.progress);
     }
+    
+    // Additional delay for final processing
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Generate dummy AI response
     const response = {
@@ -541,6 +616,8 @@ export function ArchitectDashboard() {
       selectedFiles,
     };
     setPendingFormData(formData);
+    setIsCreateDialogOpen(false);
+    setShowAIReview(true);
     await simulateAIProcessing(formData);
   };
 
@@ -808,16 +885,7 @@ export function ArchitectDashboard() {
                 </div>
               )}
 
-              {/* AI processing and result are now handled in the review dialog */}
-              {/* AI Analysis Review Dialog */}
-              <AIAnalysisReviewDialog
-                open={showAIReview}
-                onConfirm={handleConfirmAIReview}
-                onCancel={handleCancelAIReview}
-                aiResponse={aiResponse}
-                formData={pendingFormData}
-                isProcessing={isProcessing}
-              />
+
 
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
@@ -839,6 +907,17 @@ export function ArchitectDashboard() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* AI Analysis Review Dialog */}
+      <AIAnalysisReviewDialog
+        open={showAIReview}
+        onConfirm={handleConfirmAIReview}
+        onCancel={handleCancelAIReview}
+        aiResponse={aiResponse}
+        formData={pendingFormData}
+        isProcessing={isProcessing}
+        processingProgress={processingProgress}
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

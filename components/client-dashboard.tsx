@@ -35,6 +35,7 @@ import {
   TrendingUp,
   CreditCard,
   BarChart3,
+  Download,
 } from "lucide-react";
 import { getProjects, saveProject, type Project } from "@/lib/userData";
 import { useToast } from "@/hooks/use-toast";
@@ -254,6 +255,222 @@ export function ClientDashboard() {
     setIsDetailsDialogOpen(true);
   };
 
+  const openSaleListingInNewTab = (project: Project) => {
+    if (!project.erpResponse) return;
+    
+    const salesOrderHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sales Order - ${project.name}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 12px; }
+    .header-section { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .bill-to, .install-at { width: 48%; }
+    .job-info { margin: 20px 0; padding: 10px; background: #f9f9f9; }
+    .sales-info { display: flex; justify-content: space-between; margin: 20px 0; }
+    .items-section { margin: 20px 0; }
+    .item-group { margin: 15px 0; border: 1px solid #ddd; padding: 10px; }
+    .item-header { font-weight: bold; background: #f5f5f5; padding: 5px; margin: -10px -10px 10px -10px; }
+    .item-details { margin: 5px 0; }
+    .item-line { display: flex; justify-content: space-between; margin: 2px 0; }
+    .subtotal { text-align: right; font-weight: bold; margin: 10px 0; }
+    .totals-section { margin: 30px 0; border-top: 2px solid #000; padding-top: 10px; }
+    .total-line { display: flex; justify-content: space-between; margin: 3px 0; }
+    .grand-total { font-weight: bold; font-size: 14px; border-top: 1px solid #000; padding-top: 5px; }
+    .signature-section { margin-top: 40px; }
+    .signature-line { border-bottom: 1px solid #000; width: 300px; margin: 20px 0 5px 0; }
+    .terms { margin: 20px 0; font-size: 10px; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header-section">
+    <div class="bill-to">
+      <strong>Bill To:</strong><br>
+      Construction Portal Client<br>
+      ${project.location}<br>
+      E: client@constructionportal.com
+    </div>
+    <div class="install-at">
+      <strong>Install At:</strong><br>
+      ${project.name}<br>
+      ${project.location}<br>
+      P: (555) 123-4567<br>
+      E: client@constructionportal.com
+    </div>
+  </div>
+  
+  <div class="job-info">
+    <strong>Job Name:</strong> ${project.erpResponse.project}<br>
+    <strong>PO Number:</strong> ${project.erpResponse.po_number}
+  </div>
+  
+  <div class="sales-info">
+    <div><strong>Sales Rep:</strong> Construction Portal</div>
+    <div><strong>Terms:</strong> Standard Payment Terms</div>
+    <div><strong>Prepared By:</strong> System</div>
+  </div>
+  
+  <div class="items-section">
+    ${project.erpResponse.approved_items.map((item, index) => `
+      <div class="item-group">
+        <div class="item-header">${item.area} - ${item.desc}</div>
+        <div class="item-details">
+          <div class="item-line">
+            <span>SKU: ${item.sku}</span>
+            <span>Quantity: ${item.qty} ${item.uom}</span>
+          </div>
+          <div class="item-line">
+            <span>Unit Price: $${item.unit_price.toLocaleString()}</span>
+            <span><strong>Extended: $${item.amount.toLocaleString()}</strong></span>
+          </div>
+        </div>
+        <div class="subtotal">Subtotal: $${item.amount.toLocaleString()}</div>
+      </div>
+    `).join('')}
+  </div>
+  
+  <div class="totals-section">
+    <div class="total-line">Subtotal: <span>$${(project.erpResponse.totals.materials + project.erpResponse.totals.labor + project.erpResponse.totals.install).toLocaleString()}</span></div>
+    <div class="total-line">Discount: <span>$${project.erpResponse.totals.discounts.toLocaleString()}</span></div>
+    <div class="total-line">Tax: <span>$${project.erpResponse.totals.tax.toLocaleString()}</span></div>
+    <div class="total-line grand-total">Total: <span>$${project.erpResponse.totals.grand_total.toLocaleString()}</span></div>
+    <div class="total-line grand-total">Balance Due: <span>$${project.erpResponse.totals.grand_total.toLocaleString()}</span></div>
+  </div>
+  
+  <div class="terms">
+    <strong>Terms and Conditions:</strong><br>
+    By signing this agreement you are agreeing to Construction Portal's terms of sale. All sales are final.
+    Payment terms as specified in payment schedule. Materials and installation as described above.
+  </div>
+  
+  <div class="signature-section">
+    <div>Name: <div class="signature-line"></div></div>
+    <div>Signature: <div class="signature-line"></div></div>
+    <div>Date: <div class="signature-line"></div></div>
+  </div>
+</body>
+</html>
+    `;
+    
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(salesOrderHtml);
+      newWindow.document.close();
+    }
+  };
+
+  const downloadSalesOrder = (project: Project) => {
+    if (!project.erpResponse) return;
+    
+    const salesOrderHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sales Order - ${project.name}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 12px; }
+    .header-section { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .bill-to, .install-at { width: 48%; }
+    .job-info { margin: 20px 0; padding: 10px; background: #f9f9f9; }
+    .sales-info { display: flex; justify-content: space-between; margin: 20px 0; }
+    .items-section { margin: 20px 0; }
+    .item-group { margin: 15px 0; border: 1px solid #ddd; padding: 10px; }
+    .item-header { font-weight: bold; background: #f5f5f5; padding: 5px; margin: -10px -10px 10px -10px; }
+    .item-details { margin: 5px 0; }
+    .item-line { display: flex; justify-content: space-between; margin: 2px 0; }
+    .subtotal { text-align: right; font-weight: bold; margin: 10px 0; }
+    .totals-section { margin: 30px 0; border-top: 2px solid #000; padding-top: 10px; }
+    .total-line { display: flex; justify-content: space-between; margin: 3px 0; }
+    .grand-total { font-weight: bold; font-size: 14px; border-top: 1px solid #000; padding-top: 5px; }
+    .signature-section { margin-top: 40px; }
+    .signature-line { border-bottom: 1px solid #000; width: 300px; margin: 20px 0 5px 0; }
+    .terms { margin: 20px 0; font-size: 10px; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header-section">
+    <div class="bill-to">
+      <strong>Bill To:</strong><br>
+      Construction Portal Client<br>
+      ${project.location}<br>
+      E: client@constructionportal.com
+    </div>
+    <div class="install-at">
+      <strong>Install At:</strong><br>
+      ${project.name}<br>
+      ${project.location}<br>
+      P: (555) 123-4567<br>
+      E: client@constructionportal.com
+    </div>
+  </div>
+  
+  <div class="job-info">
+    <strong>Job Name:</strong> ${project.erpResponse.project}<br>
+    <strong>PO Number:</strong> ${project.erpResponse.po_number}
+  </div>
+  
+  <div class="sales-info">
+    <div><strong>Sales Rep:</strong> Construction Portal</div>
+    <div><strong>Terms:</strong> Standard Payment Terms</div>
+    <div><strong>Prepared By:</strong> System</div>
+  </div>
+  
+  <div class="items-section">
+    ${project.erpResponse.approved_items.map((item, index) => `
+      <div class="item-group">
+        <div class="item-header">${item.area} - ${item.desc}</div>
+        <div class="item-details">
+          <div class="item-line">
+            <span>SKU: ${item.sku}</span>
+            <span>Quantity: ${item.qty} ${item.uom}</span>
+          </div>
+          <div class="item-line">
+            <span>Unit Price: $${item.unit_price.toLocaleString()}</span>
+            <span><strong>Extended: $${item.amount.toLocaleString()}</strong></span>
+          </div>
+        </div>
+        <div class="subtotal">Subtotal: $${item.amount.toLocaleString()}</div>
+      </div>
+    `).join('')}
+  </div>
+  
+  <div class="totals-section">
+    <div class="total-line">Subtotal: <span>$${(project.erpResponse.totals.materials + project.erpResponse.totals.labor + project.erpResponse.totals.install).toLocaleString()}</span></div>
+    <div class="total-line">Discount: <span>$${project.erpResponse.totals.discounts.toLocaleString()}</span></div>
+    <div class="total-line">Tax: <span>$${project.erpResponse.totals.tax.toLocaleString()}</span></div>
+    <div class="total-line grand-total">Total: <span>$${project.erpResponse.totals.grand_total.toLocaleString()}</span></div>
+    <div class="total-line grand-total">Balance Due: <span>$${project.erpResponse.totals.grand_total.toLocaleString()}</span></div>
+  </div>
+  
+  <div class="terms">
+    <strong>Terms and Conditions:</strong><br>
+    By signing this agreement you are agreeing to Construction Portal's terms of sale. All sales are final.
+    Payment terms as specified in payment schedule. Materials and installation as described above.
+  </div>
+  
+  <div class="signature-section">
+    <div>Name: <div class="signature-line"></div></div>
+    <div>Signature: <div class="signature-line"></div></div>
+    <div>Date: <div class="signature-line"></div></div>
+  </div>
+</body>
+</html>
+    `;
+    
+    const blob = new Blob([salesOrderHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Sales-Order-${project.name.replace(/\s+/g, '-')}-${project.erpResponse.po_number}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const totalProjectValue = projects.reduce(
     (sum, p) =>
       sum +
@@ -395,6 +612,26 @@ export function ClientDashboard() {
                             <Eye className="mr-1 h-4 w-4" />
                             View
                           </Button>
+                          {project.erpResponse && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openSaleListingInNewTab(project)}
+                              >
+                                <DollarSign className="mr-1 h-4 w-4" />
+                                Sale
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => downloadSalesOrder(project)}
+                              >
+                                <Download className="mr-1 h-4 w-4" />
+                                Order
+                              </Button>
+                            </>
+                          )}
                           {project.status === "client-review" && (
                             <Button
                               size="sm"
